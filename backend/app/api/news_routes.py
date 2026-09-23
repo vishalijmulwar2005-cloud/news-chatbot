@@ -48,6 +48,14 @@ def get_news(
         query = query.filter(NewsArticleModel.category.ilike(category))
 
     total = query.count()
+    if total == 0:
+        import asyncio
+        try:
+            asyncio.run(sync_all_rss_feeds(db))
+            total = query.count()
+        except Exception as e:
+            print(f"[AutoSync Error] {e}")
+
     articles = query.order_by(NewsArticleModel.published_at.desc()).offset((page - 1) * limit).limit(limit).all()
 
     return NewsListResponse(

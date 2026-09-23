@@ -9,8 +9,9 @@ class Settings:
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
 
-    # SQLite local database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./news_chatbot.db")
+    # SQLite local database (use /tmp on Vercel serverless)
+    _default_db = "sqlite:////tmp/news_chatbot.db" if os.getenv("VERCEL") else "sqlite:///./news_chatbot.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", _default_db)
 
     # Gemini AI API Key (Google AI Studio) - enables enhanced LLM responses
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
