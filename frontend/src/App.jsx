@@ -134,6 +134,7 @@ export default function App() {
         {activeTab === 'chat' && (
           <ChatPage
             initialQuery={chatInitialQuery}
+            onClearInitialQuery={() => setChatInitialQuery('')}
             onSelectArticle={setSelectedArticle}
             onBack={() => setActiveTab('home')}
           />

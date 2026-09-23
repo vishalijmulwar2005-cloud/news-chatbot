@@ -11,7 +11,7 @@ class NewsArticleBase(BaseModel):
     source_name: str
     source_url: str
     author: Optional[str] = None
-    published_at: datetime
+    published_at: Optional[datetime] = None
     category: str
     language: str = "en"
     provider_id: str = "rss"

@@ -162,7 +162,8 @@ class ZeroTokenEngine:
             )
 
         # 3. Ordinal Follow-up ("explain the second one", "first story")
-        if intent in ["follow_up_ordinal", "explain", "summarize"] and recent_messages:
+        has_ordinal_indicator = bool(re.search(r"\b(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th|that one|this story|that story|pehla|dusra|teesra)\b", user_message.lower()))
+        if (intent == "follow_up_ordinal" or has_ordinal_indicator) and recent_messages:
             last_bot_msg = next((m for m in reversed(recent_messages) if m.role == "assistant"), None)
             if last_bot_msg and last_bot_msg.citations_json:
                 import json

@@ -1,5 +1,15 @@
-const RAW_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/+$/, '') : '';
-const API_BASE = RAW_BASE ? `${RAW_BASE}/api` : '/api';
+function getApiBase() {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (!envUrl) return '/api';
+
+  let formatted = envUrl.replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(formatted)) {
+    formatted = `https://${formatted}`;
+  }
+  return formatted.endsWith('/api') ? formatted : `${formatted}/api`;
+}
+
+const API_BASE = getApiBase();
 
 export async function fetchCategories() {
   try {

@@ -37,7 +37,7 @@ def get_categories(db: Session = Depends(get_db)):
     return result
 
 @router.get("/news", response_model=NewsListResponse)
-def get_news(
+async def get_news(
     category: Optional[str] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
@@ -49,12 +49,12 @@ def get_news(
 
     total = query.count()
     if total == 0:
-        import asyncio
         try:
-            asyncio.run(sync_all_rss_feeds(db))
+            from app.providers.rss_provider import seed_fallback_articles
+            seed_fallback_articles(db)
             total = query.count()
         except Exception as e:
-            print(f"[AutoSync Error] {e}")
+            print(f"[AutoSeed Error] {e}")
 
     articles = query.order_by(NewsArticleModel.published_at.desc()).offset((page - 1) * limit).limit(limit).all()
 

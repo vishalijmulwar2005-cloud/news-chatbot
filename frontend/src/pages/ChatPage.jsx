@@ -19,6 +19,7 @@ const DEFAULT_WELCOME = {
 
 export default function ChatPage({
   initialQuery = '',
+  onClearInitialQuery,
   onSelectArticle,
   onBack
 }) {
@@ -39,6 +40,9 @@ export default function ChatPage({
   useEffect(() => {
     if (initialQuery && initialQuery.trim()) {
       handleSendMessage(initialQuery);
+      if (onClearInitialQuery) {
+        onClearInitialQuery();
+      }
     }
   }, [initialQuery]);
 

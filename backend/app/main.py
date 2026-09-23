@@ -17,17 +17,48 @@ from app.schemas.news import HealthResponse
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+def init_db_seeds():
+    db = SessionLocal()
+    try:
+        if db.query(NewsArticleModel).count() == 0:
+            from app.providers.rss_provider import seed_fallback_articles
+            seed_fallback_articles(db)
+            print("[DB Init] Fallback news articles seeded.")
+    except Exception as e:
+        print(f"[DB Init Notice] {e}")
+    finally:
+        db.close()
+
+init_db_seeds()
+
+async def _background_sync_rss():
+    db = SessionLocal()
+    try:
+        await sync_all_rss_feeds(db)
+    except Exception as e:
+        print(f"[RSS Background Error] {e}")
+    finally:
+        db.close()
+
+async def _background_sync_newsdata():
+    db = SessionLocal()
+    try:
+        await sync_newsdata_feeds(db)
+    except Exception as e:
+        print(f"[NewsData Background Error] {e}")
+    finally:
+        db.close()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db = SessionLocal()
     try:
         gemini_status = "Gemini AI ENABLED" if settings.GEMINI_API_KEY else "Zero-Token mode"
         newsdata_status = "NewsData.io ENABLED" if settings.NEWSDATA_API_KEY else "RSS-only"
         print(f"[Startup] Initializing: {gemini_status} | News source: {newsdata_status}")
-        # Run both providers in parallel at startup
-        asyncio.create_task(sync_all_rss_feeds(db))
+        # Run providers in background tasks with independent sessions
+        asyncio.create_task(_background_sync_rss())
         if settings.NEWSDATA_API_KEY:
-            asyncio.create_task(sync_newsdata_feeds(db))
+            asyncio.create_task(_background_sync_newsdata())
     except Exception as e:
         print(f"[Startup Error] {e}")
     yield
@@ -44,6 +75,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -78,14 +78,24 @@ class LLMAdapter:
             for i, a in enumerate(articles)
         )
 
-        # Build recent conversation history for multi-turn context
+        # Build prior conversation history excluding the current message if already present
+        prior_messages = [m for m in recent_messages if m.content != user_message]
+
+        # Build turns ensuring alternating roles (starting with user, ending with user)
         history_parts = []
-        for msg in recent_messages[-4:]:      # last 4 messages for context window efficiency
+        last_role = None
+        for msg in prior_messages[-4:]:
             role = "user" if msg.role == "user" else "model"
-            history_parts.append({
-                "role": role,
-                "parts": [{"text": msg.content}]
-            })
+            if role != last_role:
+                history_parts.append({
+                    "role": role,
+                    "parts": [{"text": msg.content}]
+                })
+                last_role = role
+
+        # If last turn in history was 'user', drop it so we can append the latest user message
+        if history_parts and history_parts[-1]["role"] == "user":
+            history_parts.pop()
 
         system_instruction = (
             "You are a smart, friendly News AI Assistant embedded in a mobile news app.\n"
@@ -104,7 +114,7 @@ class LLMAdapter:
             f"Retrieved articles:\n{news_context}"
         )
 
-        # Final user turn
+        # Final current user turn
         history_parts.append({
             "role": "user",
             "parts": [{"text": user_message}]
