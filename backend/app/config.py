@@ -22,8 +22,8 @@ class Settings:
     # Cache / refresh settings
     NEWS_CACHE_TTL_SECONDS: int = int(os.getenv("NEWS_CACHE_TTL_SECONDS", "900"))  # 15 minutes
 
-    # CORS Origins and Regex for Vercel and local dev
-    CORS_ORIGIN_REGEX: str = r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app)(:\d+)?$"
+    # CORS Origins and Regex for Vercel, Render, and local dev
+    CORS_ORIGIN_REGEX: str = r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*\.onrender\.com)(:\d+)?$"
     CORS_ORIGINS: list = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
