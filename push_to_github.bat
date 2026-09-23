@@ -1,7 +1,7 @@
 @echo off
 title Push News-Chatbot to GitHub
 echo ===================================================
-echo   Pushing to https://github.com/gedamyash2006-ship-it/News-Chatbot
+echo   Pushing to https://github.com/vishalijmulwar2005-cloud/news-chatbot
 echo ===================================================
 echo.
 
@@ -24,7 +24,7 @@ if %ERRORLEVEL% equ 0 (
     echo.
     echo ===================================================
     echo   SUCCESS! Uploaded to:
-    echo   https://github.com/gedamyash2006-ship-it/News-Chatbot
+    echo   https://github.com/vishalijmulwar2005-cloud/news-chatbot
     echo ===================================================
 ) else (
     echo.
