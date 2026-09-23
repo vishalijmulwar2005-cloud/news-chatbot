@@ -2,7 +2,7 @@
 LLM Adapter
 -----------
 Routes AI requests to:
-  1. Google Gemini (gemini-1.5-flash)  — when GEMINI_API_KEY is configured
+  1. Google Gemini (gemini-2.0-flash)  — when GEMINI_API_KEY is configured
   2. Built-in Zero-Token NLP engine    — always available as the default / fallback
 
 Gemini is used in a RAG (Retrieval-Augmented Generation) pattern:
@@ -23,7 +23,7 @@ from app.ai.zero_token_engine import zero_token_engine
 
 GEMINI_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 
