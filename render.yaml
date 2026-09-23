@@ -1,0 +1,35 @@
+services:
+  # 1. FastAPI Backend (Web Service)
+  - type: web
+    name: news-chatbot-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: NEWS_CACHE_TTL_SECONDS
+        value: "900"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NEWSDATA_API_KEY
+        sync: false
+
+  # 2. React Vite Frontend (Static Site)
+  - type: web
+    name: news-chatbot-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: news-chatbot-backend
+          property: host

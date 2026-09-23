@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+const RAW_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/+$/, '') : '';
+const API_BASE = RAW_BASE ? `${RAW_BASE}/api` : '/api';
 
 export async function fetchCategories() {
   try {
