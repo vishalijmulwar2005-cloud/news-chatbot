@@ -123,11 +123,16 @@ class ZeroTokenEngine:
         tokens = extract_tokens(user_message)
         
         # Check if category is mentioned in text
-        all_categories = ["India", "World", "Technology", "Business", "Sports", "Science", "Entertainment", "Health"]
+        all_categories = ["India", "World", "Technology", "Business", "Sports", "Science", "Entertainment", "Health", "Cricket"]
         for cat in all_categories:
             if cat.lower() in user_message.lower():
                 category = cat
                 break
+        # Also detect cricket/IPL/T20 as Cricket category
+        cricket_keywords = ["cricket", "ipl", "t20", "odi", "test match", "bcci", "icc", "virat", "rohit", "dhoni"]
+        if not category and any(kw in user_message.lower() for kw in cricket_keywords):
+            category = "Cricket"
+            tokens = list(set(tokens) | {w for w in cricket_keywords if w in user_message.lower()})
 
         # 1. System instruction confirmation ("jo bhi answer de wo ek dam systematic aur correct de")
         if intent == "system_instruction":
@@ -148,18 +153,52 @@ class ZeroTokenEngine:
                 "Top Business & Market headlines"
             ]
 
-        # 2. Greeting Intent
-        if intent == "greeting" and not tokens:
+        # 2. Greeting Intent — detect name + interest
+        interest_keywords = {
+            "cricket": "Cricket", "ipl": "Cricket", "t20": "Cricket", "bcci": "Cricket",
+            "tech": "Technology", "technology": "Technology",
+            "business": "Business", "finance": "Business", "market": "Business",
+            "sports": "Sports", "football": "Sports", "tennis": "Sports",
+            "health": "Health", "science": "Science", "entertainment": "Entertainment",
+            "india": "India", "world": "World"
+        }
+        detected_interest = None
+        msg_lower = user_message.lower()
+        for kw, cat in interest_keywords.items():
+            if kw in msg_lower:
+                detected_interest = cat
+                break
+
+        # Extract name if mentioned ("my name is X" / "name is X")
+        name_match = re.search(r"(?:my name is|name is|i am|i'm|mera naam)\s+([a-zA-Z]+)", msg_lower)
+        user_name = name_match.group(1).capitalize() if name_match else None
+        name_part = f" {user_name}" if user_name else ""
+
+        if intent == "greeting" and detected_interest:
+            # Personalized greeting + immediately fetch interest-related news
+            category = detected_interest
+            tokens = [detected_interest.lower()]
+            greeting_msg = (
+                f"### Namaste{name_part}! 👋 Main aapka **News AI Assistant** hoon.\n\n"
+                f"Aapka **{detected_interest}** mein interest dikh raha hai — yahan hain latest updates:\n\n"
+            )
+            # Fall through to news search below with category set
+            intent = "news_lookup"
+            # Prepend greeting to response by storing it
+            _greeting_prefix = greeting_msg
+        elif intent == "greeting" and not tokens:
             return (
-                "### Namaste! Main aapka **News AI Assistant** hoon.\n\n"
+                f"### Namaste{name_part}! 👋 Main aapka **News AI Assistant** hoon.\n\n"
                 "Main aapko **100% factual, verified aur systematic** news updates deta hoon:\n\n"
-                "• **Real-time updates**: India, World, Tech, Business, Sports & Health\n"
-                "• **Instant 3-point key takeaways** har story ke liye\n"
+                "• **Real-time updates**: India, World, Tech, Business, **Cricket**, Sports & Health\n"
+                "• **Instant key takeaways** har story ke liye\n"
                 "• **Official source attribution** taaki facts hamesha authentic rahein\n\n"
                 "Aap aaj kaun si khabar dekhna chahte hain?",
                 [],
-                ["Top headlines today", "Latest technology news", "India news updates"]
+                ["Cricket news", "Latest technology news", "India top headlines"]
             )
+        else:
+            _greeting_prefix = ""
 
         # 3. Ordinal Follow-up ("explain the second one", "first story")
         has_ordinal_indicator = bool(re.search(r"\b(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th|that one|this story|that story|pehla|dusra|teesra)\b", user_message.lower()))
@@ -204,13 +243,26 @@ class ZeroTokenEngine:
                     print(f"[ZeroTokenEngine] Follow-up parsing error: {e}")
 
         # 4. News Search & Retrieval
+        if not hasattr(self, '_greeting_prefix_store'):
+            self._greeting_prefix_store = ""
+        _greeting_prefix = locals().get('_greeting_prefix', "")
+
         query = db.query(NewsArticleModel)
         if category:
             query = query.filter(NewsArticleModel.category == category)
             
         all_candidates = query.order_by(NewsArticleModel.published_at.desc()).limit(50).all()
         if not all_candidates:
-            all_candidates = db.query(NewsArticleModel).order_by(NewsArticleModel.published_at.desc()).limit(30).all()
+            # Try Sports as fallback for Cricket if no cricket-specific articles yet
+            if category == "Cricket":
+                all_candidates = db.query(NewsArticleModel).filter(
+                    or_(NewsArticleModel.category == "Sports",
+                        NewsArticleModel.title.ilike("%cricket%"),
+                        NewsArticleModel.title.ilike("%IPL%"),
+                        NewsArticleModel.title.ilike("%T20%"))
+                ).order_by(NewsArticleModel.published_at.desc()).limit(30).all()
+            if not all_candidates:
+                all_candidates = db.query(NewsArticleModel).order_by(NewsArticleModel.published_at.desc()).limit(30).all()
 
         if tokens:
             scored = [(art, score_article(art, tokens, category)) for art in all_candidates]
@@ -247,7 +299,7 @@ class ZeroTokenEngine:
             )
             body_blocks.append(block)
 
-        response_text = intro + "\n\n---\n\n".join(body_blocks)
+        response_text = _greeting_prefix + intro + "\n\n---\n\n".join(body_blocks)
 
         first_cat = relevant_articles[0].category if relevant_articles else "India"
         follow_ups = [

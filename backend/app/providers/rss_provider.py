@@ -32,6 +32,11 @@ RSS_FEEDS = {
         {"url": "https://feeds.bbci.co.uk/sport/rss.xml", "source": "BBC Sport"},
         {"url": "https://www.espn.com/espn/rss/news", "source": "ESPN"},
     ],
+    "Cricket": [
+        {"url": "https://www.espncricinfo.com/rss/content/story/feeds/0.xml", "source": "ESPNCricinfo"},
+        {"url": "https://sports.ndtv.com/feeds/ndtvcricket.xml", "source": "NDTV Cricket"},
+        {"url": "https://feeds.bbci.co.uk/sport/cricket/rss.xml", "source": "BBC Cricket"},
+    ],
     "Science": [
         {"url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", "source": "BBC Science"},
         {"url": "https://www.sciencedaily.com/rss/top/science.xml", "source": "ScienceDaily"},
@@ -52,7 +57,8 @@ CATEGORY_PLACEHOLDER_IMAGES = {
     "Sports": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80",
     "Science": "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=800&q=80",
     "Entertainment": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80",
-    "Health": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80"
+    "Health": "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800&q=80",
+    "Cricket": "https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?w=800&q=80"
 }
 
 def clean_html(raw_html: Optional[str]) -> str:
